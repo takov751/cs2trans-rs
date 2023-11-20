@@ -13,7 +13,7 @@ where the number 1337 is the port number you need to connect to.
 Usage: cs2trans-rs [OPTIONS]
 
 Options:
-  -h, --host <HOST>  [default: 127.0.0.1]
+  -s, --server <HOST>  [default: 127.0.0.1]
   -p, --port <PORT>  [default: 1337]
   -h, --help         Print help
 ```
