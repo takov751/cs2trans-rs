@@ -2,7 +2,7 @@ use tokio::net::TcpStream;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use lingua::{ LanguageDetector, LanguageDetectorBuilder};
 use lingua::Language as Lang;
-use Lang::English;
+use Lang::{English, Hungarian, Russian};
 use reqwest::Client;
 use serde_json;
 use clap::Parser;
@@ -25,8 +25,15 @@ async fn telnet_client(host: &str, port: u16) -> std::io::Result<()> {
         let data = String::from_utf8_lossy(&buffer[..bytes_read]);
         let lines: Vec<String> = data.lines().map(|line| line.to_string()).collect();
         for line in lines {
-            if players.len() == 0 {
+            //IN PROGRESS new way to detect user connect, disconnect
+            if line.ends_with(" connected") {
+                println!("{}", line);
+
             }
+            if line.ends_with(" disconnected"){
+                println!("{}", line);
+            }
+            //after asking status parse users
             if line.contains("active") {
                 let slices: Vec<String> = line.split("'").map(|s| s.to_string()).collect();
                 if slices.len() > 1 {
@@ -86,9 +93,10 @@ async fn trans(text: &str) -> Result<Option<String>, reqwest::Error> {
 }
 
 fn need_translate(text: &String) -> bool {
-    //let l: Vec<Lang> = vec![English, Russian, Hungarian];
-    let detector: LanguageDetector = LanguageDetectorBuilder::from_all_spoken_languages().build();
-    //let detector: LanguageDetector = LanguageDetectorBuilder::from_languages(&l).build();
+    //language detection is somewhat ok with these settings
+    let l: Vec<Lang> = vec![English, Russian, Hungarian];
+    //let detector: LanguageDetector = LanguageDetectorBuilder::from_all_spoken_languages().build();
+    let detector: LanguageDetector = LanguageDetectorBuilder::from_languages(&l).with_minimum_relative_distance(0.9).build();
     let detected_language: Option<Lang> = detector.detect_language_of(text);
     //println!("{:?}", detected_language);
     match detected_language {
@@ -109,7 +117,7 @@ fn need_translate(text: &String) -> bool {
 #[derive(Parser)]
 struct Args {
     #[clap(short, long, default_value = "127.0.0.1")]
-    host: String,
+    server: String,
 
     #[clap(short, long, default_value = "1337")]
     port: u16,
@@ -117,5 +125,5 @@ struct Args {
 #[tokio::main]
 async fn main() {
     let args: Args = Args::parse();
-    telnet_client(&args.host, args.port).await.unwrap();
+    telnet_client(&args.server, args.port).await.unwrap();
 }
